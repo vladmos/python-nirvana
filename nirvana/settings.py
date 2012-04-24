@@ -3,7 +3,7 @@ DEFAULT_FILENAME = 'nirvana.ini'
 CONFIG_STRUCTURE = {
     'package': {
         'required': True,
-        'fields': ['name', 'maintainer', 'requirements', 'description'],
+        'fields': ['name', 'maintainer', 'maintainer_email', 'requirements', 'description'],
     },
     'python': {
         'fields': ['version', 'source_dir'],

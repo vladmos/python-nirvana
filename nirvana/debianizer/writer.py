@@ -13,8 +13,10 @@ class Debianizer(object):
         remove_path('setup.py')
         os.makedirs('debian')
 
-    def _make_debian_config(self, filename, lines):
-        with open('debian/' + filename, 'w') as file:
+    def _make_config(self, filename, lines):
+        filename = filename[1:] if filename.startswith('/') else 'debian/' + filename
+
+        with open(filename, 'w') as file:
             file.write('\n'.join(lines))
             file.write('\n')
 
@@ -24,7 +26,10 @@ class Debianizer(object):
             'Source: %s' % self.name,
             'Build-Depends: debhelper (>= 4), python (>=2.5), python-support, cdbs',
             'XS-Python-Version: >= 2.5',
-            'Maintainer: %s' % self.config['package']['maintainer'],
+            'Maintainer: %s <%s>' % (
+                self.config['package']['maintainer'],
+                self.config['package']['maintainer_email'],
+            ),
             '',
             'Package: %s' % self.name,
             'Architecture: all',
@@ -36,7 +41,7 @@ class Debianizer(object):
 
         lines.append('Description: %s' % self.config['package']['description'])
 
-        self._make_debian_config('control', lines)
+        self._make_config('control', lines)
 
     def make_rules(self):
         lines = [
@@ -55,7 +60,27 @@ class Debianizer(object):
                 lines.extend(['', '%s/%s' % (section_type, package_name)])
                 lines.extend('\t' + rule for rule in package_rules)
 
-        self._make_debian_config('rules', lines)
+        self._make_config('rules', lines)
+
+    def make_setup_py(self):
+        if not self.config['python']:
+            return
+
+        lines = [
+            'from setuptools import setup, find_packages',
+            '',
+            'setup(',
+            '    name=%s,' % repr(self.name),
+            '    version=0.1,',
+            '    description=%s,' % repr(self.config['package']['description']),
+            '    author=%s,' % repr(self.config['package']['maintainer']),
+            '    author_email=%s,' % repr(self.config['package']['maintainer_email']),
+            '    package_dir={\'\': %s},' % repr(self.config['python']['source_dir']),
+            '    packages=find_packages(%s),' % repr(self.config['python']['source_dir']),
+            ')'
+        ]
+
+        self._make_config('/setup.py', lines)
 
     def execute(self):
         self.prepare()
