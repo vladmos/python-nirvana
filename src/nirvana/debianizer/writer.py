@@ -69,6 +69,9 @@ class Debianizer(object):
             output.push([
                 '#!/usr/bin/make -f',
                 '',
+                'DEB_PYTHON_SYSTEM = pycentral',
+                'DEB_COMPRESS_EXCLUDE = .py',
+                '',
                 'include /usr/share/cdbs/1/rules/debhelper.mk',
             ])
             if header_config['python']:
