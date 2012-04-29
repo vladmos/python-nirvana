@@ -22,7 +22,10 @@ def _get_config():
                 print('Nirvana configuration warning: %s' % warning.message)
         return config
 
-def debianize():
+def command_debianize(args):
+    """
+    Creates debianization for a project based on nirvana config files
+    """
     config = _get_config()
 
     try:
@@ -36,11 +39,19 @@ def debianize():
     Debianizer(config).execute(version, settings.CHANGELOG_FILENAME)
     print('The debianization is ready')
 
-def clean():
+def command_clean(args):
+    """
+    Removes debian/ and setup.py
+    """
     remove_debianization()
     print('The debianization is deleted')
 
-def changelog(create=False):
+def command_changelog(args):
+    """
+    Creates and updates changelog
+    """
+    create = args and args[0] == '--create'
+
     if create:
         os.system('dch --create --distributor=yandex --changelog changelog')
     else:

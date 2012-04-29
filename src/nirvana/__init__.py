@@ -2,7 +2,10 @@ import sys
 import commands
 
 def get_commands():
-    return [c for c in dir(commands) if not c.startswith('_') and c.islower()]
+    return [c[8:] for c in dir(commands) if c.startswith('command_')]
+
+def get_command(command_name):
+    return getattr(commands, 'command_' + command_name, None)
 
 class Client(object):
     def __init__(self, argv=None):
@@ -30,12 +33,20 @@ class Client(object):
         if len(self.argv) > 1:
             command_name = self.argv[1].lower()
             if command_name != 'help':
-                command = getattr(commands, command_name, None)
+                command = get_command(command_name)
                 if command:
-                    command()
+                    command(self.argv[2:])
                     return
+            else:
+                if len(self.argv) > 2:
+                    command_name = self.argv[2].lower()
+                    command = get_command(command_name)
+                    if command:
+                        print(command.__doc__)
+                        return
 
-        print self.main_help_text()
+
+        print(self.main_help_text())
 
 def main():
     Client().execute()
