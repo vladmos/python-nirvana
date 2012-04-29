@@ -1,7 +1,7 @@
 import os
 from collections import defaultdict
 
-from utils import remove_path, remove_debianization
+from utils import remove_debianization
 
 class ConfigWriter(object):
     def __init__(self, filename):
