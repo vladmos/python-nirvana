@@ -84,7 +84,7 @@ class Debianizer(object):
 
             for section_type, section_rules in sections.iteritems():
                 for package_name, package_rules in section_rules.iteritems():
-                    output.push(['', '%s/%s' % (section_type, package_name)])
+                    output.push(['', '%s/%s::' % (section_type, package_name)])
                     output.push('\t' + rule for rule in package_rules)
 
     def make_setup_py(self):
