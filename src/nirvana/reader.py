@@ -109,6 +109,8 @@ class IniConfig(object):
                                 raise ConfigError('File is missing: "%s"' % filename)
 
                             contents = file.readlines()
+                            file.close()
+
                             contents = [c.strip() for c in contents]
                             contents = [c for c in contents if c]
                             self._override[section][parameter] = contents

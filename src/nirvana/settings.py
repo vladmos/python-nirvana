@@ -1,4 +1,5 @@
 DEFAULT_CONFIG_FILENAME = 'nirvana.ini'
+CHANGELOG_FILENAME = 'changelog'
 
 HEADER_CONFIG_STRUCTURE = {
     'project': {

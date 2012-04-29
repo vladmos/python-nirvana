@@ -1,5 +1,6 @@
 import os
 from collections import defaultdict
+import shutil
 
 from utils import remove_debianization
 
@@ -31,6 +32,9 @@ class Debianizer(object):
     def prepare(self):
         remove_debianization()
         os.makedirs('debian')
+
+    def copy_changelog(self, changelog_filename):
+        shutil.copyfile(changelog_filename, 'debian/changelog')
 
     def make_control(self):
         header_config = self.config.header()
@@ -98,7 +102,7 @@ class Debianizer(object):
                 '',
                 'setup(',
                 '    name=%s,' % repr(header_config['project']['name']),
-                '    version=0.1,',
+                '    version=%s,' % repr(self._version),
                 '    description=%s,' % repr(header_config['project']['description']),
                 '    author=%s,' % repr(header_config['project']['maintainer']),
                 '    author_email=%s,' % repr(header_config['project']['maintainer_email']),
@@ -107,8 +111,10 @@ class Debianizer(object):
                 ')'
             ])
 
-    def execute(self):
+    def execute(self, version, changelog_filename):
         self.prepare()
+        self._version = version
         for method_name in dir(self):
             if method_name.startswith('make_'):
                 getattr(self, method_name)()
+        self.copy_changelog(changelog_filename)
