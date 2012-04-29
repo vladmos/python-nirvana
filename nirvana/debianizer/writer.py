@@ -54,12 +54,13 @@ class Debianizer(object):
                     'Package: %s' % package_config['package']['name'],
                     'Architecture: all',
                 ])
-                #    'Depends: python%s,' % ' (%s)' % python_version if python_version else '',
-                #
-                #])
+                requirements = ['Depends: python%s,' % ' (%s)' % python_version if python_version else '']
+                requirements.extend(' %s,' % r for r in package_config['package']['debian-requirements'])
 
                 #Remove last trailing comma
-                #lines[-1] = lines[-1][:-1]
+                requirements[-1] = requirements[-1][:-1]
+
+                output.push(requirements)
 
                 output.push('Description: %s' % package_config['package']['description'])
 

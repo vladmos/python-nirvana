@@ -13,7 +13,9 @@ HEADER_CONFIG_STRUCTURE = {
 PACKAGE_CONFIG_STRUCTURE = {
     'package': {
         'required': True,
-        'fields': ['name', 'debian-requirements', 'description'],
+        'fields': ['name', 'description'],
+        'optional': ['debian-requirements'],
+        'load_file': ['debian-requirements'],
     },
     'django': {
         'requires': [('nginx', 'lighttpd')],

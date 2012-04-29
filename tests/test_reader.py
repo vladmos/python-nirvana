@@ -9,7 +9,9 @@ from nirvana import reader
 CONFIG_FILENAME = 'test-nirvana.ini'
 
 def prepare_config_file(sample_name, filename=CONFIG_FILENAME):
-    copyfile('test_configs/%s.ini' % sample_name, filename)
+    if sample_name.find('.') == -1:
+        sample_name += '.ini'
+    copyfile('test_configs/%s' % sample_name, filename)
 
 class IniConfigReaderTester(unittest.TestCase):
     config_structure = {
@@ -27,7 +29,7 @@ class IniConfigReaderTester(unittest.TestCase):
     }
 
     def tearDown(self):
-        os.system('rm -f *.ini')
+        os.system('rm -f *.ini *.txt')
 
     def test_blank_structure(self):
         prepare_config_file('sample')
@@ -153,6 +155,38 @@ class IniConfigReaderTester(unittest.TestCase):
             'section4': {
                 'optional': ['key'],
             },
+        }
+        self.assertRaises(reader.ConfigError, reader.IniConfig, CONFIG_FILENAME, structure=config_structure)
+
+    def test_load_file_1(self):
+        prepare_config_file('load_file')
+        prepare_config_file('load.txt', filename='load.txt')
+        config_structure = {
+            'section': {
+                'optional': ['load'],
+                'load_file': ['load'],
+            }
+        }
+        config = reader.IniConfig(CONFIG_FILENAME, structure=config_structure)
+        self.assertEqual(tuple(config['section']['load']), ('value 1', 'value 2'))
+
+    def test_load_file_2(self):
+        prepare_config_file('load_file')
+        config_structure = {
+            'section': {
+                'optional': ['load', 'reload'],
+                'load_file': ['reload'],
+                }
+        }
+        config = reader.IniConfig(CONFIG_FILENAME, structure=config_structure)
+
+    def test_load_file_3(self):
+        prepare_config_file('load_file')
+        config_structure = {
+            'section': {
+                'optional': ['load'],
+                'load_file': ['load'],
+            }
         }
         self.assertRaises(reader.ConfigError, reader.IniConfig, CONFIG_FILENAME, structure=config_structure)
 

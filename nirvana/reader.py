@@ -1,3 +1,4 @@
+from collections import defaultdict
 import warnings
 
 from ConfigParser import RawConfigParser, NoSectionError, NoOptionError
@@ -12,13 +13,15 @@ class ConfigWarning(Warning):
 
 
 class IniConfigSection(object):
-    def __init__(self, config, section):
-        self._config = config
+    def __init__(self, ini_config, section):
+        self._ini_config = ini_config
         self._section = section
 
     def __getitem__(self, item):
         try:
-            return self._config.get(self._section, item)
+            if item in self._ini_config._override[self._section]:
+                return self._ini_config._override[self._section][item]
+            return self._ini_config._config.get(self._section, item)
         except (NoOptionError, NoSectionError):
             pass
 
@@ -32,6 +35,7 @@ class IniConfigSection(object):
 class IniConfig(object):
     def __init__(self, filename, structure=None):
         self._config = RawConfigParser()
+        self._override = defaultdict(dict)
         if not self._config.read(filename):
             raise ConfigError(u'Config "%s" is missing' % filename)
 
@@ -39,7 +43,7 @@ class IniConfig(object):
             self._check_structure(structure)
 
     def __getitem__(self, item):
-        return IniConfigSection(self._config, item)
+        return IniConfigSection(self, item)
 
     def _check_structure(self, structure):
         """
@@ -92,6 +96,24 @@ class IniConfig(object):
                                 section,
                                 plural(u'section', required_sections),
                                 join(required_sections, u'[]')))
+
+                # load_file
+                for parameter in parameters.get('load_file', []):
+                    if config.has_option(section, parameter):
+                        filename = config.get(section, parameter)
+                        if filename:
+                            try:
+                                file = open(filename, 'r')
+                            except IOError:
+                                raise ConfigError('File is missing: "%s"' % filename)
+
+                            contents = file.readlines()
+                            contents = [c.strip() for c in contents]
+                            contents = [c for c in contents if c]
+                            self._override[section][parameter] = contents
+                    else:
+                        self._override[section][parameter] = []
+
 
         unknown_sections = []
         for section in config.sections():
