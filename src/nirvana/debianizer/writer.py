@@ -1,7 +1,7 @@
 import os
 from collections import defaultdict
 
-from utils import remove_path
+from utils import remove_path, remove_debianization
 
 class ConfigWriter(object):
     def __init__(self, filename):
@@ -29,8 +29,7 @@ class Debianizer(object):
         self.config = config
 
     def prepare(self):
-        remove_path('debian')
-        remove_path('setup.py')
+        remove_debianization()
         os.makedirs('debian')
 
     def make_control(self):

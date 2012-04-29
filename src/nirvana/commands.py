@@ -3,6 +3,7 @@ import sys
 
 from debianizer.writer import Debianizer
 from reader import load_config, ConfigError, ConfigWarning
+from debianizer.utils import remove_debianization
 
 def _get_config():
     with warnings.catch_warnings(record=True) as warnings_list:
@@ -21,3 +22,6 @@ def _get_config():
 def debianize():
     config = _get_config()
     Debianizer(config).execute()
+
+def clean():
+    remove_debianization()

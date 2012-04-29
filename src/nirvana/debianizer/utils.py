@@ -7,3 +7,7 @@ def remove_path(path):
             shutil.rmtree(path)
         else:
             os.remove(path)
+
+def remove_debianization():
+    remove_path('debian')
+    remove_path('setup.py')
