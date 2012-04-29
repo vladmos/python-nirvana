@@ -9,6 +9,10 @@ HEADER_CONFIG_STRUCTURE = {
     'python': {
         'fields': ['version', 'source_dir'],
     },
+    'entry_points': {
+        'requires': ['python'],
+        'custom': True,
+    }
 }
 
 PACKAGE_CONFIG_STRUCTURE = {

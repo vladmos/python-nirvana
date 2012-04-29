@@ -27,10 +27,11 @@ class IniConfigSection(object):
             pass
 
     def __iter__(self):
-        return iter(self._config.items(self._section))
+        for option in self._ini_config._config.options(self._section):
+            yield option, self[option]
 
-    def __bool__(self):
-        return bool(self._config.items(self._section))
+    def __nonzero__(self):
+        return bool(self._ini_config._config.items(self._section))
 
 
 class IniConfig(object):

@@ -108,8 +108,23 @@ class Debianizer(object):
                 '    author_email=%s,' % repr(header_config['project']['maintainer_email']),
                 '    package_dir={\'\': %s},' % repr(header_config['python']['source_dir']),
                 '    packages=find_packages(%s),' % repr(header_config['python']['source_dir']),
-                ')'
             ])
+
+            if header_config['entry_points']:
+                output.push([
+                    '    entry_points={',
+                    '        \'console_scripts\': [',
+                ])
+
+                for key, value in header_config['entry_points']:
+                    output.push('            %s,' % repr('%s = %s' % (key, value)))
+
+                output.push([
+                    '        ]',
+                    '    },'
+                ])
+
+            output.push(')')
 
     def execute(self, version, changelog_filename):
         self.prepare()
