@@ -2,7 +2,7 @@ import warnings
 
 from ConfigParser import RawConfigParser, NoSectionError, NoOptionError
 
-from settings import DEFAULT_FILENAME
+import settings
 
 class ConfigError(Exception):
     pass
@@ -11,7 +11,7 @@ class ConfigWarning(Warning):
     pass
 
 
-class ConfigSection(object):
+class IniConfigSection(object):
     def __init__(self, config, section):
         self._config = config
         self._section = section
@@ -29,9 +29,8 @@ class ConfigSection(object):
         return bool(self._config.items(self._section))
 
 
-class Config(object):
-    def __init__(self, structure=None, filename=None):
-        filename = filename or DEFAULT_FILENAME
+class IniConfig(object):
+    def __init__(self, filename, structure=None):
         self._config = RawConfigParser()
         if not self._config.read(filename):
             raise ConfigError(u'Config "%s" is missing' % filename)
@@ -40,7 +39,7 @@ class Config(object):
             self._check_structure(structure)
 
     def __getitem__(self, item):
-        return ConfigSection(self._config, item)
+        return IniConfigSection(self._config, item)
 
     def _check_structure(self, structure):
         """
@@ -103,3 +102,33 @@ class Config(object):
                 plural(u'section', unknown_sections),
                 join(unknown_sections, u'[]')), ConfigWarning)
 
+
+class Config(object):
+    pass
+
+
+class SingleConfig(Config):
+    def __init__(self, filename):
+        self._main_config = IniConfig(filename, structure=settings.SINGLE_CONFIG_STRUCTURE)
+
+    def header(self):
+        return self._main_config
+
+    def packages(self):
+        return [self._main_config]
+
+
+class MultipleConfig(Config):
+    def __init__(self, header_filename, package_filenames):
+        self._header_config = IniConfig(header_filename, structure=settings.HEADER_CONFIG_STRUCTURE)
+        self._package_configs = [IniConfig(f, settings.PACKAGE_CONFIG_STRUCTURE) for f in package_filenames]
+
+    def header(self):
+        return self._header_config
+
+    def packages(self):
+        return self._package_configs
+
+
+def load_config():
+    return SingleConfig(settings.DEFAULT_CONFIG_FILENAME)

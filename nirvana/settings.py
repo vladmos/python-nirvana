@@ -1,12 +1,19 @@
-DEFAULT_FILENAME = 'nirvana.ini'
+DEFAULT_CONFIG_FILENAME = 'nirvana.ini'
 
-CONFIG_STRUCTURE = {
-    'package': {
+HEADER_CONFIG_STRUCTURE = {
+    'project': {
         'required': True,
-        'fields': ['name', 'maintainer', 'maintainer_email', 'requirements', 'description'],
+        'fields': ['name', 'description', 'maintainer', 'maintainer_email'],
     },
     'python': {
         'fields': ['version', 'source_dir'],
+    },
+}
+
+PACKAGE_CONFIG_STRUCTURE = {
+    'package': {
+        'required': True,
+        'fields': ['name', 'debian-requirements', 'description'],
     },
     'django': {
         'requires': [('nginx', 'lighttpd')],
@@ -25,3 +32,6 @@ CONFIG_STRUCTURE = {
         'optional': ['spool'],
     },
 }
+
+SINGLE_CONFIG_STRUCTURE = HEADER_CONFIG_STRUCTURE.copy()
+SINGLE_CONFIG_STRUCTURE.update(PACKAGE_CONFIG_STRUCTURE)

@@ -5,12 +5,13 @@ import warnings
 
 from context import nirvana
 from nirvana import reader
-from nirvana.settings import DEFAULT_FILENAME
 
-def prepare_config_file(sample_name, filename=DEFAULT_FILENAME):
+CONFIG_FILENAME = 'test-nirvana.ini'
+
+def prepare_config_file(sample_name, filename=CONFIG_FILENAME):
     copyfile('test_configs/%s.ini' % sample_name, filename)
 
-class ConfigReaderTester(unittest.TestCase):
+class IniConfigReaderTester(unittest.TestCase):
     config_structure = {
         'required': {
             'required': True,
@@ -30,11 +31,11 @@ class ConfigReaderTester(unittest.TestCase):
 
     def test_blank_structure(self):
         prepare_config_file('sample')
-        reader.Config()
+        reader.IniConfig(CONFIG_FILENAME)
 
     def test_basic_verification(self):
         prepare_config_file('sample')
-        reader.Config(structure=self.config_structure)
+        reader.IniConfig(CONFIG_FILENAME, structure=self.config_structure)
 
     def test_optional_section(self):
         prepare_config_file('sample')
@@ -43,22 +44,18 @@ class ConfigReaderTester(unittest.TestCase):
         config_structure['section'] = {
             'fields': ['field'],
         }
-        reader.Config(structure=config_structure)
+        reader.IniConfig(CONFIG_FILENAME, structure=config_structure)
 
     def test_missing_required_field(self):
         prepare_config_file('no_required_parameter')
-        self.assertRaises(reader.ConfigError, reader.Config, structure=self.config_structure)
+        self.assertRaises(reader.ConfigError, reader.IniConfig, CONFIG_FILENAME, structure=self.config_structure)
 
     def test_missing_required_section(self):
         prepare_config_file('no_required_section')
-        self.assertRaises(reader.ConfigError, reader.Config, structure=self.config_structure)
+        self.assertRaises(reader.ConfigError, reader.IniConfig, CONFIG_FILENAME, structure=self.config_structure)
 
     def test_missing_config(self):
-        self.assertRaises(reader.ConfigError, reader.Config)
-
-    def test_custom_config_name(self):
-        prepare_config_file('sample', filename='custom.ini')
-        reader.Config(filename='custom.ini')
+        self.assertRaises(reader.ConfigError, reader.IniConfig, CONFIG_FILENAME)
 
     def test_satisfied_requirements_1(self):
         prepare_config_file('requirements')
@@ -77,7 +74,7 @@ class ConfigReaderTester(unittest.TestCase):
                 'optional': ['key'],
             },
         }
-        reader.Config(config_structure)
+        reader.IniConfig(CONFIG_FILENAME, config_structure)
 
     def test_satisfied_requirements_2(self):
         prepare_config_file('requirements')
@@ -96,7 +93,7 @@ class ConfigReaderTester(unittest.TestCase):
                 'optional': ['key'],
             },
         }
-        reader.Config(config_structure)
+        reader.IniConfig(CONFIG_FILENAME, config_structure)
 
     def test_satisfied_requirements_3(self):
         prepare_config_file('requirements')
@@ -117,7 +114,7 @@ class ConfigReaderTester(unittest.TestCase):
                 'requires': ['section6']
             },
         }
-        reader.Config(config_structure)
+        reader.IniConfig(CONFIG_FILENAME, config_structure)
 
 
 
@@ -138,7 +135,7 @@ class ConfigReaderTester(unittest.TestCase):
                 'optional': ['key'],
             },
         }
-        self.assertRaises(reader.ConfigError, reader.Config, config_structure)
+        self.assertRaises(reader.ConfigError, reader.IniConfig, CONFIG_FILENAME, structure=config_structure)
 
     def test_unsatisfied_requirements_2(self):
         prepare_config_file('requirements')
@@ -157,7 +154,7 @@ class ConfigReaderTester(unittest.TestCase):
                 'optional': ['key'],
             },
         }
-        self.assertRaises(reader.ConfigError, reader.Config, config_structure)
+        self.assertRaises(reader.ConfigError, reader.IniConfig, CONFIG_FILENAME, structure=config_structure)
 
     def test_custom_sections(self):
         prepare_config_file('custom')
@@ -166,7 +163,7 @@ class ConfigReaderTester(unittest.TestCase):
                 'custom': True
             }
         }
-        reader.Config(config_structure)
+        reader.IniConfig(CONFIG_FILENAME, config_structure)
 
     def test_unknown_field_warning(self):
         prepare_config_file('warnings')
@@ -175,7 +172,7 @@ class ConfigReaderTester(unittest.TestCase):
         }
         with warnings.catch_warnings(record=True) as w:
             warnings.simplefilter('always')
-            reader.Config(config_structure)
+            reader.IniConfig(CONFIG_FILENAME, config_structure)
             self.assertEqual(len(w), 1)
             warning = w[0]
             self.assertTrue(issubclass(warning.category, reader.ConfigWarning))
@@ -186,7 +183,7 @@ class ConfigReaderTester(unittest.TestCase):
         config_structure = {}
         with warnings.catch_warnings(record=True) as w:
             warnings.simplefilter('always')
-            reader.Config(config_structure)
+            reader.IniConfig(CONFIG_FILENAME, config_structure)
             self.assertEqual(len(w), 1)
             warning = w[0]
             self.assertTrue(issubclass(warning.category, reader.ConfigWarning))

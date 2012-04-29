@@ -2,14 +2,13 @@ import warnings
 import sys
 
 from debianizer.writer import Debianizer
-from reader import Config, ConfigError, ConfigWarning
-from settings import CONFIG_STRUCTURE
+from reader import load_config, ConfigError, ConfigWarning
 
-def _get_config(filename=None):
+def _get_config():
     with warnings.catch_warnings(record=True) as warnings_list:
         warnings.simplefilter('always')
         try:
-            config = Config(structure=CONFIG_STRUCTURE, filename=filename)
+            config = load_config()
         except ConfigError, e:
             print 'Nirvana configuration error: %s' % e
             sys.exit(1)

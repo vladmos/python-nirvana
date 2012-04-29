@@ -3,84 +3,106 @@ from collections import defaultdict
 
 from utils import remove_path
 
+class ConfigWriter(object):
+    def __init__(self, filename):
+        self._filename = filename[1:] if filename.startswith('/') else 'debian/' + filename
+
+    def __enter__(self):
+        self._file = open(self._filename, 'w')
+        return self
+
+    def __exit__(self, exc_type, exc_val, exc_tb):
+        self._file.close()
+
+    def push(self, lines):
+        if isinstance(lines, basestring):
+            lines = [lines]
+        else:
+            lines = list(lines)
+
+        for line in lines:
+            self._file.write(line + '\n')
+
+
 class Debianizer(object):
     def __init__(self, config):
         self.config = config
-        self.name = self.config['package']['name']
 
     def prepare(self):
         remove_path('debian')
         remove_path('setup.py')
         os.makedirs('debian')
 
-    def _make_config(self, filename, lines):
-        filename = filename[1:] if filename.startswith('/') else 'debian/' + filename
-
-        with open(filename, 'w') as file:
-            file.write('\n'.join(lines))
-            file.write('\n')
-
     def make_control(self):
-        python_version = self.config['python']['version']
-        lines = [
-            'Source: %s' % self.name,
-            'Build-Depends: debhelper (>= 4), python (>=2.5), python-support, cdbs',
-            'XS-Python-Version: >= 2.5',
-            'Maintainer: %s <%s>' % (
-                self.config['package']['maintainer'],
-                self.config['package']['maintainer_email'],
-            ),
-            '',
-            'Package: %s' % self.name,
-            'Architecture: all',
-            'Depends: python%s,' % ' (%s)' % python_version if python_version else '',
-        ]
+        header_config = self.config.header()
+        with ConfigWriter('control') as output:
 
-        #Remove last trailing comma
-        lines[-1] = lines[-1][:-1]
+            python_version = header_config['python']['version']
+            output.push([
+                'Source: %s' % header_config['project']['name'],
+                'Build-Depends: debhelper (>= 4), python (>=2.5), python-support, cdbs',
+                'XS-Python-Version: >= 2.5',
+                'Maintainer: %s <%s>' % (
+                    header_config['project']['maintainer'],
+                    header_config['project']['maintainer_email'],
+                ),
+            ])
 
-        lines.append('Description: %s' % self.config['package']['description'])
+            for package_config in self.config.packages():
+                output.push([
+                    '',
+                    'Package: %s' % package_config['package']['name'],
+                    'Architecture: all',
+                ])
+                #    'Depends: python%s,' % ' (%s)' % python_version if python_version else '',
+                #
+                #])
 
-        self._make_config('control', lines)
+                #Remove last trailing comma
+                #lines[-1] = lines[-1][:-1]
+
+                output.push('Description: %s' % package_config['package']['description'])
 
     def make_rules(self):
-        lines = [
-            '#!/usr/bin/make -f',
-            '',
-            'include /usr/share/cdbs/1/rules/debhelper.mk',
-        ]
-        if self.config['python']:
-            lines.append('include /usr/share/cdbs/1/class/python-distutils.mk')
+        header_config = self.config.header()
+        with ConfigWriter('rules') as output:
+            output.push([
+                '#!/usr/bin/make -f',
+                '',
+                'include /usr/share/cdbs/1/rules/debhelper.mk',
+            ])
+            if header_config['python']:
+                output.push('include /usr/share/cdbs/1/class/python-distutils.mk')
 
-        sections = defaultdict(lambda: defaultdict(list))
-        sections['binary-install'][self.name].append('dh_clearvcs -p%s' % self.name)
+            sections = defaultdict(lambda: defaultdict(list))
+            for package in self.config.packages():
+                package_name = package['package']['name']
+                sections['binary-install'][package_name].append('dh_clearvcs -p%s' % package_name)
 
-        for section_type, section_rules in sections.iteritems():
-            for package_name, package_rules in section_rules.iteritems():
-                lines.extend(['', '%s/%s' % (section_type, package_name)])
-                lines.extend('\t' + rule for rule in package_rules)
-
-        self._make_config('rules', lines)
+            for section_type, section_rules in sections.iteritems():
+                for package_name, package_rules in section_rules.iteritems():
+                    output.push(['', '%s/%s' % (section_type, package_name)])
+                    output.push('\t' + rule for rule in package_rules)
 
     def make_setup_py(self):
-        if not self.config['python']:
+        header_config = self.config.header()
+        if not header_config['python']:
             return
 
-        lines = [
-            'from setuptools import setup, find_packages',
-            '',
-            'setup(',
-            '    name=%s,' % repr(self.name),
-            '    version=0.1,',
-            '    description=%s,' % repr(self.config['package']['description']),
-            '    author=%s,' % repr(self.config['package']['maintainer']),
-            '    author_email=%s,' % repr(self.config['package']['maintainer_email']),
-            '    package_dir={\'\': %s},' % repr(self.config['python']['source_dir']),
-            '    packages=find_packages(%s),' % repr(self.config['python']['source_dir']),
-            ')'
-        ]
-
-        self._make_config('/setup.py', lines)
+        with ConfigWriter('/setup.py') as output:
+            output.push([
+                'from setuptools import setup, find_packages',
+                '',
+                'setup(',
+                '    name=%s,' % repr(header_config['project']['name']),
+                '    version=0.1,',
+                '    description=%s,' % repr(header_config['project']['description']),
+                '    author=%s,' % repr(header_config['project']['maintainer']),
+                '    author_email=%s,' % repr(header_config['project']['maintainer_email']),
+                '    package_dir={\'\': %s},' % repr(header_config['python']['source_dir']),
+                '    packages=find_packages(%s),' % repr(header_config['python']['source_dir']),
+                ')'
+            ])
 
     def execute(self):
         self.prepare()
