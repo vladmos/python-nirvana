@@ -11,17 +11,19 @@ def _get_config():
         try:
             config = load_config()
         except ConfigError, e:
-            print 'Nirvana configuration error: %s' % e
+            print('Nirvana configuration error: %s' % e)
             sys.exit(1)
 
         for warning in warnings_list:
             if issubclass(warning.category, ConfigWarning):
-                print 'Nirvana configuration warning: %s' % warning.message
+                print('Nirvana configuration warning: %s' % warning.message)
         return config
 
 def debianize():
     config = _get_config()
     Debianizer(config).execute()
+    print('The debianization is ready')
 
 def clean():
     remove_debianization()
+    print('The debianization is deleted')

@@ -1,5 +1,6 @@
 from collections import defaultdict
 import warnings
+import os
 
 from ConfigParser import RawConfigParser, NoSectionError, NoOptionError
 
@@ -153,4 +154,12 @@ class MultipleConfig(Config):
 
 
 def load_config():
-    return SingleConfig(settings.DEFAULT_CONFIG_FILENAME)
+    main_filename = settings.DEFAULT_CONFIG_FILENAME
+
+    config_filenames = [f for f in os.listdir('.') if f.endswith('.ini')]
+    if main_filename in config_filenames:
+        config_filenames.remove(main_filename)
+
+    if config_filenames:
+        return MultipleConfig(main_filename, config_filenames)
+    return SingleConfig(main_filename)
