@@ -1,5 +1,6 @@
 import warnings
 import sys
+import os
 
 from debianizer.writer import Debianizer
 from reader import load_config, ConfigError, ConfigWarning
@@ -27,3 +28,6 @@ def debianize():
 def clean():
     remove_debianization()
     print('The debianization is deleted')
+
+def changelog():
+    os.system('dch -i --distributor=yanedex --changelog changelog')
