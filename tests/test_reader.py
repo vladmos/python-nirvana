@@ -178,7 +178,7 @@ class IniConfigReaderTester(unittest.TestCase):
                 'load_file': ['reload'],
                 }
         }
-        config = reader.IniConfig(CONFIG_FILENAME, structure=config_structure)
+        reader.IniConfig(CONFIG_FILENAME, structure=config_structure)
 
     def test_load_file_3(self):
         prepare_config_file('load_file')
