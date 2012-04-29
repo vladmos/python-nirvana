@@ -5,8 +5,9 @@ import shutil
 from utils import remove_debianization
 
 class ConfigWriter(object):
-    def __init__(self, filename):
+    def __init__(self, filename, executable=False):
         self._filename = filename[1:] if filename.startswith('/') else 'debian/' + filename
+        self._executable = executable
 
     def __enter__(self):
         self._file = open(self._filename, 'w')
@@ -14,6 +15,8 @@ class ConfigWriter(object):
 
     def __exit__(self, exc_type, exc_val, exc_tb):
         self._file.close()
+        if self._executable:
+            os.system('chmod a+x %s' % self._filename)
 
     def push(self, lines):
         if isinstance(lines, basestring):
@@ -69,7 +72,7 @@ class Debianizer(object):
 
     def make_rules(self):
         header_config = self.config.header()
-        with ConfigWriter('rules') as output:
+        with ConfigWriter('rules', executable=True) as output:
             output.push([
                 '#!/usr/bin/make -f',
                 '',
