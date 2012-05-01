@@ -3,4 +3,4 @@
 debian
 setup.py
 build
-src/nirvana-egg.info
+src/nirvana.egg-info/
