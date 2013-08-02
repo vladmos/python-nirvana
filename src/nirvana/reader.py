@@ -6,8 +6,10 @@ from ConfigParser import RawConfigParser, NoSectionError, NoOptionError
 
 import settings
 
+
 class ConfigError(Exception):
     pass
+
 
 class ConfigWarning(Warning):
     pass
@@ -31,7 +33,10 @@ class IniConfigSection(object):
             yield option, self[option]
 
     def __nonzero__(self):
-        return bool(self._ini_config._config.items(self._section))
+        try:
+            return bool(self._ini_config._config.items(self._section))
+        except NoSectionError:
+            return False
 
 
 class IniConfig(object):

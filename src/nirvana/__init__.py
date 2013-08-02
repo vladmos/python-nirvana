@@ -1,11 +1,15 @@
 import sys
-import commands
+
+from commands import commands
+
 
 def get_commands():
     return [c[8:] for c in dir(commands) if c.startswith('command_')]
 
+
 def get_command(command_name):
     return getattr(commands, 'command_' + command_name, None)
+
 
 class Client(object):
     def __init__(self, argv=None):
@@ -45,8 +49,8 @@ class Client(object):
                         print(command.__doc__)
                         return
 
-
         print(self.main_help_text())
+
 
 def main():
     Client().execute()

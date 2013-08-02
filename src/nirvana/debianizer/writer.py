@@ -4,6 +4,7 @@ import shutil
 
 from utils import remove_debianization
 
+
 class ConfigWriter(object):
     def __init__(self, filename, executable=False):
         self._filename = filename[1:] if filename.startswith('/') else 'debian/' + filename
@@ -68,6 +69,7 @@ class Debianizer(object):
 
                 output.push(requirements)
 
+                output.push('XB-Python-Version: ${python:Versions}')
                 output.push('Description: %s' % package_config['package']['description'])
 
     def make_rules(self):
@@ -85,9 +87,9 @@ class Debianizer(object):
                 output.push('include /usr/share/cdbs/1/class/python-distutils.mk')
 
             sections = defaultdict(lambda: defaultdict(list))
-            for package in self.config.packages():
-                package_name = package['package']['name']
-                sections['binary-install'][package_name].append('dh_clearvcs -p%s' % package_name)
+            #for package in self.config.packages():
+            #    package_name = package['package']['name']
+            #    sections['binary-install'][package_name].append('dh_clearvcs -p%s' % package_name)
 
             for section_type, section_rules in sections.iteritems():
                 for package_name, package_rules in section_rules.iteritems():
