@@ -3,10 +3,11 @@ import sys
 import os
 import re
 
-from debianizer.writer import Debianizer
+from debianizer import Debianizer
 from reader import load_config, ConfigError, ConfigWarning
 from debianizer.utils import remove_debianization
 import settings
+
 
 def _get_config():
     with warnings.catch_warnings(record=True) as warnings_list:
@@ -21,6 +22,7 @@ def _get_config():
             if issubclass(warning.category, ConfigWarning):
                 print('Nirvana configuration warning: %s' % warning.message)
         return config
+
 
 def command_debianize(args):
     """
@@ -39,12 +41,14 @@ def command_debianize(args):
     Debianizer(config).execute(version, settings.CHANGELOG_FILENAME)
     print('The debianization is ready')
 
+
 def command_clean(args):
     """
     Removes debian/ and setup.py
     """
     remove_debianization()
     print('The debianization is deleted')
+
 
 def command_changelog(args):
     """
