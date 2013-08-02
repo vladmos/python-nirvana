@@ -2,7 +2,7 @@ import os
 from collections import defaultdict
 import shutil
 
-from utils import remove_debianization
+from utils import remove_debianization, get_current_datetime
 
 
 class ConfigWriter(object):
@@ -38,7 +38,25 @@ class Debianizer(object):
         os.makedirs('debian')
 
     def copy_changelog(self, changelog_filename):
-        shutil.copyfile(changelog_filename, 'debian/changelog')
+        if changelog_filename:
+            shutil.copyfile(changelog_filename, 'debian/changelog')
+        else:
+            with ConfigWriter('changelog') as output:
+                header_config = self.config.header()
+                output.push([
+                    '%(project_name)s (%(version)s) unstable; urgency=low' % {
+                        'project_name': header_config['project']['name'],
+                        'version': self._version,
+                    },
+                    '',
+                    '  * Initial release.',
+                    '',
+                    ' -- %(maintainer_name)s <%(maintainer_email)s>  %(datetime)s' % {
+                        'maintainer_name': header_config['project']['maintainer'],
+                        'maintainer_email': header_config['project']['maintainer_email'],
+                        'datetime': get_current_datetime(),
+                    },
+                ])
 
     def make_control(self):
         header_config = self.config.header()
@@ -131,7 +149,7 @@ class Debianizer(object):
 
             output.push(')')
 
-    def execute(self, version, changelog_filename):
+    def execute(self, version, changelog_filename=None):
         self.prepare()
         self._version = version
         for method_name in dir(self):

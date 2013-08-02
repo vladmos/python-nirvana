@@ -37,9 +37,11 @@ class Commands(object):
                 with open(settings.CHANGELOG_FILENAME) as changelog_file:
                     line = changelog_file.readline()
                     self._version = re.search(r'\((.*?)\)', line).group(1)
-            except (IOError, AttributeError):
-                print ('Error: missing or invalid changelog file')
+            except AttributeError:
+                print ('Error: invalid changelog file')
                 sys.exit(1)
+            except IOError:
+                self._version = '0.1.0'
 
         return self._version
 
@@ -48,7 +50,7 @@ class Commands(object):
         Creates debianization for a project based on nirvana config files
         """
 
-        Debianizer(self.config).execute(self.version, settings.CHANGELOG_FILENAME)
+        Debianizer(self.config).execute(self.version)
         print('The debianization is ready')
 
     def command_clean(self, args):
