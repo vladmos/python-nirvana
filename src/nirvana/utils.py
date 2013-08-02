@@ -5,7 +5,8 @@ class CommandError(Exception):
     pass
 
 
-def call_command(*args):
-    error = call(args)
+def call_command(command):
+
+    error = call(command.split())
     if error:
-        raise CommandError('Calling "%s", error code: %s' % (u' '.join(args), error))
+        raise CommandError('Calling "%s", error code: %s' % (command, error))

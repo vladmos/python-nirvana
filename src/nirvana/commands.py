@@ -1,6 +1,5 @@
 import warnings
 import sys
-import os
 import re
 
 from debianizer import Debianizer
@@ -47,7 +46,7 @@ class Commands(object):
 
     def command_debianize(self, args):
         """
-        Creates debianization for a project based on nirvana config files
+        Create debianization for a project based on nirvana config files
         """
 
         Debianizer(self.config).execute(self.version)
@@ -55,7 +54,7 @@ class Commands(object):
 
     def command_clean(self, args):
         """
-        Removes debian/, setup.py, built files
+        Remove debian/, setup.py, build-related files
         """
         remove_debianization()
         for package_config in self.config.packages():
@@ -67,24 +66,31 @@ class Commands(object):
 
     def command_changelog(self, args):
         """
-        Creates and updates changelog
+        Create and update changelog
         """
         create = args and args[0] == '--create'
 
         if create:
-            os.system('dch --create --distributor=yandex --changelog changelog')
+            call_command('dch --create --distributor=nirvana --changelog changelog')
         else:
-            os.system('dch -i --distributor=yandex --changelog changelog')
+            call_command('dch -i --distributor=nirvana --changelog changelog')
+
+    def command_build(self, args):
+        """
+        Make a deb-package
+        """
+        self.command_debianize(args)
+        call_command('debuild')
 
     def command_install(self, args):
         """
-        Installs the package in the system
+        Install the package in the system
         """
 
         self.command_debianize(args)
         call_command('debuild')
         for package_config in self.config.packages():
-            call_command('sudo', 'dpkg', '-i', '../%s_%s_all.deb' % (
+            call_command('sudo dpkg -i ../%s_%s_all.deb' % (
                 package_config['package']['name'],
                 self.version,
             ))
