@@ -5,7 +5,7 @@ import re
 
 from debianizer import Debianizer
 from reader import load_config, ConfigError, ConfigWarning
-from debianizer.utils import remove_debianization, remove_deb_package
+from debianizer.utils import remove_debianization, remove_deb_package, remove_eggs
 import settings
 from utils import call_command
 
@@ -59,7 +59,9 @@ class Commands(object):
         """
         remove_debianization()
         for package_config in self.config.packages():
-            remove_deb_package(package_config['package']['name'], self.version)
+            package_name = package_config['package']['name']
+            remove_deb_package(package_name, self.version)
+            remove_eggs(package_name, self.config.header()['python']['source_dir'])
 
         print('Clean completed')
 

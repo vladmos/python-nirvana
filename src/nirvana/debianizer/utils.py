@@ -27,6 +27,10 @@ def remove_deb_package(package_name, version):
     remove_path(file_mask + '_amd64.upload')
 
 
+def remove_eggs(package_name, source_dir):
+    remove_path(os.path.join(source_dir, package_name.replace('-', '_') + '.egg-info'))
+
+
 def get_current_datetime():
     """
     Get datetime in a changelog-compliant format.
