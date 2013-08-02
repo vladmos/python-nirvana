@@ -52,15 +52,16 @@ class Commands(object):
         Debianizer(self.config).execute(self.version)
         print('The debianization is ready')
 
-    def command_clean(self, args):
+    def command_clean(self, args, remove_deb=True):
         """
         Remove debian/, setup.py, build-related files
         """
         remove_debianization()
         for package_config in self.config.packages():
             package_name = package_config['package']['name']
-            remove_deb_package(package_name, self.version)
             remove_eggs(package_name, self.config.header()['python']['source_dir'])
+            if remove_deb:
+                remove_deb_package(package_name, self.version)
 
         print('Clean completed')
 
@@ -81,6 +82,7 @@ class Commands(object):
         """
         self.command_debianize(args)
         call_command('debuild')
+        self.command_clean(args, remove_deb=False)
 
     def command_install(self, args):
         """
