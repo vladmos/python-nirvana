@@ -24,13 +24,17 @@ PACKAGE_CONFIG_STRUCTURE = {
     },
     'django': {
         'requires': [('nginx', 'lighttpd')],
-        'fields': ['project'],
+        'fields': ['project', 'minspare', 'maxspare', 'maxchildren'],
         'optional': ['ycssjs'],
     },
     'nginx': {
         'requires': ['django'],
         'fields': ['server_name'],
         'optional': ['client_max_body_size', 'include', 'rewrite', 'internal'],
+    },
+    'redirect': {
+        'requires': [('nginx', 'lighttpd')],
+        'custom': True,
     },
     'cron': {
         'custom': True,
