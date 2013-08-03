@@ -11,24 +11,30 @@ class ConfigWriter(object):
             filename = '%s.%s' % (package['package']['name'], filename)
         self._filename = filename[1:] if filename.startswith('/') else 'debian/' + filename
         self._executable = executable
+        self._lines = []
 
     def __enter__(self):
-        self._file = open(self._filename, 'w')
         return self
 
     def __exit__(self, exc_type, exc_val, exc_tb):
+        if not self._lines:
+            return
+
+        self._file = open(self._filename, 'w')
+
+        for line in self._lines:
+            self._file.write(line + '\n')
+
         self._file.close()
+
         if self._executable:
             os.system('chmod a+x %s' % self._filename)
 
     def push(self, lines):
         if isinstance(lines, basestring):
             lines = [lines]
-        else:
-            lines = list(lines)
 
-        for line in lines:
-            self._file.write(line + '\n')
+        self._lines.extend(lines)
 
 
 class Debianizer(object):
@@ -170,6 +176,19 @@ class Debianizer(object):
 
                 if package_config['nginx']:
                     output.push('/var/log/nginx/%s' % package_config['django']['project'])
+
+    def make_install(self):
+        for package_config in self.config.packages:
+            with ConfigWriter('install', package=package_config, count=self.config.packages_count) as output:
+
+                if package_config['django']:
+                    django_dir = package_config['django']['dir']
+                    output.push('%s/*\t\t\t/usr/lib/%s' % (django_dir, django_dir))
+                    output.push('debian/%s.conf\t\t\t/etc/init/' % package_config['django']['project'])
+
+                if package_config['nginx']:
+                    output.push('debian/90-%s\t\t\t/etc/nginx/sites-available/' % package_config['django']['project'])
+
 
     def execute(self, version, changelog_filename=None):
         self.prepare()

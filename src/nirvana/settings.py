@@ -24,7 +24,7 @@ PACKAGE_CONFIG_STRUCTURE = {
     },
     'django': {
         'requires': [('nginx', 'lighttpd')],
-        'fields': ['project', 'minspare', 'maxspare', 'maxchildren'],
+        'fields': ['project', 'minspare', 'maxspare', 'maxchildren', 'dir'],
         'optional': ['ycssjs'],
     },
     'nginx': {
