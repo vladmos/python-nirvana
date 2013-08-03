@@ -165,17 +165,27 @@ class Debianizer(object):
 
             output.push(')')
 
+    def _get_dirs(self, package_config, only_777=False):
+        dirs = []
+
+        dirs.extend('/var/spool/%s/%s' % (
+            package_config['package']['name'], s
+        ) for s in package_config['dirs']['spool_777'].split(','))
+
+        if not only_777:
+            dirs.extend('/var/spool/%s/%s' % (
+                package_config['package']['name'], s
+            ) for s in package_config['dirs']['spool'].split(','))
+
+            if package_config['nginx']:
+                dirs.append('/var/log/nginx/%s' % package_config['django']['project'])
+
+        return dirs
+
     def make_dirs(self):
         for package_config in self.config.packages:
             with ConfigWriter('dirs', package=package_config, count=self.config.packages_count) as output:
-
-                if package_config['dirs']['spool']:
-                    output.push('/var/spool/%s/%s' % (
-                        package_config['package']['name'], s
-                    ) for s in package_config['dirs']['spool'].split(','))
-
-                if package_config['nginx']:
-                    output.push('/var/log/nginx/%s' % package_config['django']['project'])
+                output.push(self._get_dirs(package_config))
 
     def make_install(self):
         for package_config in self.config.packages:
@@ -188,6 +198,48 @@ class Debianizer(object):
 
                 if package_config['nginx']:
                     output.push('debian/90-%s\t\t\t/etc/nginx/sites-available/' % package_config['django']['project'])
+
+    def make_postinst(self):
+        for package_config in self.config.packages:
+
+            django_project = package_config['django']['project']
+
+            with ConfigWriter('postinst', executable=True, package=package_config, count=self.config.packages_count) as output:
+                output.push([
+                    '#!/bin/bash',
+                    'set -e',
+                    '',
+                    'USER="www-data"',
+                    'GROUP="www-data"',
+                    'DIRS=( %s )' % ' '.join('"%s"' % d for d in self._get_dirs(package_config)),
+                    '',
+                    'case $1 in',
+                    '   configure)',
+                    '        for DIR in ${DIRS[@]}; do',
+                    '            chown -R $USER:$GROUP $DIR',
+                    '        done',
+                    '',
+                ])
+                output.push('        chmod 777 %s' % d for d in self._get_dirs(package_config, only_777=True))
+                output.push([
+                    '',
+                    '        ln -s /etc/nginx/sites-available/90-%s /etc/nginx/sites-enabled/90-%s' % (
+                        django_project, django_project
+                    ),
+                    '        /etc/init.d/nginx reload',
+                    '',
+                    '        ;;',
+                    '',
+                    '    abort-upgrade|abort-remove|abort-deconfigure)',
+                    '        ;;',
+                    '',
+                    '    *)',
+                    '        echo "postinst called with unknown argument \`$1\'" >&2',
+                    '        ;;',
+                    'esac',
+                    '#DEBHELPER#',
+                    'exit 0',
+                ])
 
 
     def execute(self, version, changelog_filename=None):

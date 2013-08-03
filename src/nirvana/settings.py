@@ -40,7 +40,7 @@ PACKAGE_CONFIG_STRUCTURE = {
         'custom': True,
     },
     'dirs': {
-        'optional': ['spool'],
+        'optional': ['spool', 'spool_777'],
     },
 }
 
