@@ -141,10 +141,13 @@ class Config(object):
 class SingleConfig(Config):
     def __init__(self, filename):
         self._main_config = IniConfig(filename, structure=settings.SINGLE_CONFIG_STRUCTURE)
+        self.packages_count = 1
 
+    @property
     def header(self):
         return self._main_config
 
+    @property
     def packages(self):
         return [self._main_config]
 
@@ -153,10 +156,13 @@ class MultipleConfig(Config):
     def __init__(self, header_filename, package_filenames):
         self._header_config = IniConfig(header_filename, structure=settings.HEADER_CONFIG_STRUCTURE)
         self._package_configs = [IniConfig(f, settings.PACKAGE_CONFIG_STRUCTURE) for f in package_filenames]
+        self.packages_count = len(package_filenames)
 
+    @property
     def header(self):
         return self._header_config
 
+    @property
     def packages(self):
         return self._package_configs
 

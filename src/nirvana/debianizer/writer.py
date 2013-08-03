@@ -6,7 +6,9 @@ from utils import remove_debianization, get_current_datetime
 
 
 class ConfigWriter(object):
-    def __init__(self, filename, executable=False):
+    def __init__(self, filename, executable=False, package=None, count=1):
+        if package and count > 1:
+            filename = '%s.%s' % (package['package']['name'], filename)
         self._filename = filename[1:] if filename.startswith('/') else 'debian/' + filename
         self._executable = executable
 
@@ -42,7 +44,7 @@ class Debianizer(object):
             shutil.copyfile(changelog_filename, 'debian/changelog')
         else:
             with ConfigWriter('changelog') as output:
-                header_config = self.config.header()
+                header_config = self.config.header
                 output.push([
                     '%(project_name)s (%(version)s) unstable; urgency=low' % {
                         'project_name': header_config['project']['name'],
@@ -59,7 +61,7 @@ class Debianizer(object):
                 ])
 
     def make_control(self):
-        header_config = self.config.header()
+        header_config = self.config.header
         with ConfigWriter('control') as output:
 
             python_version = header_config['python']['version']
@@ -73,7 +75,7 @@ class Debianizer(object):
                 ),
             ])
 
-            for package_config in self.config.packages():
+            for package_config in self.config.packages:
                 output.push([
                     '',
                     'Package: %s' % package_config['package']['name'],
@@ -91,7 +93,7 @@ class Debianizer(object):
                 output.push('Description: %s' % package_config['package']['description'])
 
     def make_rules(self):
-        header_config = self.config.header()
+        header_config = self.config.header
         with ConfigWriter('rules', executable=True) as output:
             output.push([
                 '#!/usr/bin/make -f',
@@ -105,7 +107,7 @@ class Debianizer(object):
                 output.push('include /usr/share/cdbs/1/class/python-distutils.mk')
 
             sections = defaultdict(lambda: defaultdict(list))
-            #for package in self.config.packages():
+            #for package in self.config.packages:
             #    package_name = package['package']['name']
             #    sections['binary-install'][package_name].append('dh_clearvcs -p%s' % package_name)
 
@@ -115,7 +117,7 @@ class Debianizer(object):
                     output.push('\t' + rule for rule in package_rules)
 
     def make_setup_py(self):
-        header_config = self.config.header()
+        header_config = self.config.header
         if not header_config['python']:
             return
 
@@ -148,6 +150,18 @@ class Debianizer(object):
                 ])
 
             output.push(')')
+
+    def make_dirs(self):
+        for package_config in self.config.packages:
+            with ConfigWriter('dirs', package=package_config, count=self.config.packages_count) as output:
+
+                if package_config['dirs']['spool']:
+                    output.push('/var/spool/%s/%s' % (
+                        package_config['package']['name'], s
+                    ) for s in package_config['dirs']['spool'].split(','))
+
+                if package_config['nginx']:
+                    output.push('/var/log/nginx/%s' % package_config['django']['project'])
 
     def execute(self, version, changelog_filename=None):
         self.prepare()
