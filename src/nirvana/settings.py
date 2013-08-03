@@ -23,17 +23,11 @@ PACKAGE_CONFIG_STRUCTURE = {
         'load_file': ['debian-requirements'],
     },
     'django': {
-        'requires': [('nginx', 'lighttpd')],
-        'fields': ['project', 'minspare', 'maxspare', 'maxchildren', 'dir'],
+        'fields': ['server', 'project', 'minspare', 'maxspare', 'maxchildren', 'dir'],
         'optional': ['ycssjs'],
     },
-    'nginx': {
-        'requires': ['django'],
-        'fields': ['server_name'],
-        'optional': ['client_max_body_size', 'include', 'rewrite', 'internal'],
-    },
     'redirect': {
-        'requires': [('nginx', 'lighttpd')],
+        'requires': ['django'],
         'custom': True,
     },
     'cron': {

@@ -93,7 +93,7 @@ class Debianizer(object):
                     requirements.append(' python-django,')
                     requirements.append(' python-flup,')
 
-                if package_config['nginx']:
+                if package_config['django']['server'] == 'nginx':
                     requirements.append(' nginx,')
 
                 requirements.extend(' %s,' % r for r in package_config['package']['debian-requirements'])
@@ -177,7 +177,7 @@ class Debianizer(object):
                 package_config['package']['name'], s
             ) for s in package_config['dirs']['spool'].split(','))
 
-            if package_config['nginx']:
+            if package_config['django']['server'] == 'nginx':
                 dirs.append('/var/log/nginx/%s' % package_config['django']['project'])
 
         return dirs
@@ -196,8 +196,8 @@ class Debianizer(object):
                     output.push('%s/*\t\t\t/usr/lib/%s' % (django_dir, django_dir))
                     output.push('debian/%s.conf\t\t\t/etc/init/' % package_config['django']['project'])
 
-                if package_config['nginx']:
-                    output.push('debian/90-%s\t\t\t/etc/nginx/sites-available/' % package_config['django']['project'])
+                    if package_config['django']['server'] == 'nginx':
+                        output.push('debian/90-%s\t\t\t/etc/nginx/sites-available/' % package_config['django']['project'])
 
     def make_postinst(self):
         for package_config in self.config.packages:
@@ -241,6 +241,66 @@ class Debianizer(object):
                     'exit 0',
                 ])
 
+    def make_nginx(self):
+        for package_config in self.config.packages:
+            if package_config['django']['server'] == 'nginx':
+                with ConfigWriter('nginx', executable=True, package=package_config, count=self.config.packages_count) as output:
+
+                    # Main config
+                    output.push([
+                        'server {',
+                        '    listen 80;',
+                        '    server_name %s;' % package_config['django']['project'],
+                        '',
+                        '    set $root /usr/lib/%s;' % package_config['django']['dir'],
+                        '',
+                        '    location / {',
+                        '        fastcgi_pass unix:/var/run/%s-fcgi.sock;' % package_config['django']['dir'],
+                        '        include /etc/nginx/fastcgi_params;',
+                        '        fastcgi_param PATH_INFO $fastcgi_script_name;',
+                        '        fastcgi_param SCRIPT_NAME \'\';',
+                        '        client_max_body_size 30m;',
+                        '    }',
+                        '',
+                        '    location ^~ /media/ {',
+                        '        root $root;',
+                        '    }',
+                        '',
+                        '    location ^~ /favicon.ico {',
+                        '        root $root;',
+                        '    }',
+                        '',
+                        '    location ^~ /robots.txt {',
+                        '        root $root;',
+                        '    }',
+                        '}',
+                        '',
+                    ])
+
+                    # Redirect from www.
+                    output.push([
+                        'server {',
+                        '    listen 80;',
+                        '    server_name www.%s;' % package_config['django']['project'],
+                        '    rewrite ^(.*)$ http://%s/$1 permanent;' % package_config['django']['project'],
+                        '}',
+                    ])
+
+                    # Custom redirects
+                    for redirect_from, redirect_to in package_config['redirect']:
+                        output.push([
+                            '',
+                            'server {',
+                            '    listen 80;',
+                            '    server_name %s;' % redirect_from,
+                        ])
+
+                        if redirect_to.endswith('/'):
+                            output.push('    rewrite ^(.*)$ http://%s permanent;' % redirect_to)
+                        else:
+                            output.push('    rewrite ^(.*)$ http://%s/$1 permanent;' % redirect_to)
+
+                        output.push('}')
 
     def execute(self, version, changelog_filename=None):
         self.prepare()
