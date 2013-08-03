@@ -82,6 +82,14 @@ class Debianizer(object):
                     'Architecture: all',
                 ])
                 requirements = ['Depends: python%s,' % ' (%s)' % python_version if python_version else '']
+
+                if package_config['django']:
+                    requirements.append(' python-django,')
+                    requirements.append(' python-flup,')
+
+                if package_config['nginx']:
+                    requirements.append(' nginx,')
+
                 requirements.extend(' %s,' % r for r in package_config['package']['debian-requirements'])
 
                 # Remove last trailing comma
