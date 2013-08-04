@@ -91,7 +91,7 @@ class Commands(object):
 
         self.command_debianize(args)
         call_command('debuild')
-        for package_config in self.config.packages():
+        for package_config in self.config.packages:
             call_command('sudo dpkg -i ../%s_%s_all.deb' % (
                 package_config['package']['name'],
                 self.version,
