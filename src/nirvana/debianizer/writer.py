@@ -231,6 +231,7 @@ class Debianizer(object):
                         '        ln -fs /etc/nginx/sites-available/90-%s /etc/nginx/sites-enabled/90-%s' % (
                             django_project, django_project
                         ),
+                        '        start %s || restart %s' % (django_project, django_project),
                         '        /etc/init.d/nginx reload',
                         '',
                         '        ;;',
@@ -344,7 +345,8 @@ class Debianizer(object):
                             'method=prefork ' +
                             'minspare=%(minspare)s ' +
                             'maxspare=%(maxspare)s ' +
-                            'maxchildren=%(maxchildren)s'
+                            'maxchildren=%(maxchildren)s ' +
+                            'daemonize=false'
                         ) % {
                             'dir': package_config['django']['dir'],
                             'var_run': var_run_dir,
