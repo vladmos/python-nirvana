@@ -19,6 +19,7 @@ def create_file_path(filename):
 
 def remove_debianization():
     remove_path('debian')
+    remove_path('build')
     remove_path('setup.py')
 
 
