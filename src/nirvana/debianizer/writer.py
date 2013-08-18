@@ -30,10 +30,7 @@ class ConfigWriter(object):
         if self._executable:
             os.system('chmod a+x %s' % self._filename)
 
-    def push(self, lines):
-        if isinstance(lines, basestring):
-            lines = [lines]
-
+    def push(self, *lines):
         self._lines.extend(lines)
 
 
@@ -51,7 +48,7 @@ class Debianizer(object):
         else:
             with ConfigWriter('changelog') as output:
                 header_config = self.config.header
-                output.push([
+                output.push(
                     '%(project_name)s (%(version)s) unstable; urgency=low' % {
                         'project_name': header_config['project']['name'],
                         'version': self._version,
@@ -64,14 +61,14 @@ class Debianizer(object):
                         'maintainer_email': header_config['project']['maintainer_email'],
                         'datetime': get_current_datetime(),
                     },
-                ])
+                )
 
     def make_control(self):
         header_config = self.config.header
         with ConfigWriter('control') as output:
 
             python_version = header_config['python']['version']
-            output.push([
+            output.push(
                 'Source: %s' % header_config['project']['name'],
                 'Build-Depends: debhelper (>= 4), python (>=2.5), python-support, cdbs',
                 'XS-Python-Version: >= 2.5',
@@ -79,14 +76,14 @@ class Debianizer(object):
                     header_config['project']['maintainer'],
                     header_config['project']['maintainer_email'],
                 ),
-            ])
+            )
 
             for package_config in self.config.packages:
-                output.push([
+                output.push(
                     '',
                     'Package: %s' % package_config['package']['name'],
                     'Architecture: all',
-                ])
+                )
                 requirements = ['Depends: python%s,' % ' (%s)' % python_version if python_version else '']
 
                 if package_config['django']:
@@ -101,7 +98,7 @@ class Debianizer(object):
                 # Remove last trailing comma
                 requirements[-1] = requirements[-1][:-1]
 
-                output.push(requirements)
+                output.push(*requirements)
 
                 output.push('XB-Python-Version: ${python:Versions}')
                 output.push('Description: %s' % package_config['package']['description'])
@@ -109,14 +106,14 @@ class Debianizer(object):
     def make_rules(self):
         header_config = self.config.header
         with ConfigWriter('rules', executable=True) as output:
-            output.push([
+            output.push(
                 '#!/usr/bin/make -f',
                 '',
                 'DEB_PYTHON_SYSTEM = pycentral',
                 'DEB_COMPRESS_EXCLUDE = .py',
                 '',
                 'include /usr/share/cdbs/1/rules/debhelper.mk',
-            ])
+            )
             if header_config['python']:
                 output.push('include /usr/share/cdbs/1/class/python-distutils.mk')
 
@@ -127,7 +124,7 @@ class Debianizer(object):
 
             for section_type, section_rules in sections.iteritems():
                 for package_name, package_rules in section_rules.iteritems():
-                    output.push(['', '%s/%s::' % (section_type, package_name)])
+                    output.push('', '%s/%s::' % (section_type, package_name))
                     output.push('\t' + rule for rule in package_rules)
 
     def make_setup_py(self):
@@ -136,7 +133,7 @@ class Debianizer(object):
             return
 
         with ConfigWriter('/setup.py') as output:
-            output.push([
+            output.push(
                 'from setuptools import setup, find_packages',
                 '',
                 'setup(',
@@ -147,21 +144,21 @@ class Debianizer(object):
                 '    author_email=%s,' % repr(header_config['project']['maintainer_email']),
                 '    package_dir={\'\': %s},' % repr(header_config['python']['source_dir']),
                 '    packages=find_packages(%s),' % repr(header_config['python']['source_dir']),
-            ])
+            )
 
             if header_config['entry_points']:
-                output.push([
+                output.push(
                     '    entry_points={',
                     '        \'console_scripts\': [',
-                ])
+                )
 
                 for key, value in header_config['entry_points']:
                     output.push('            %s,' % repr('%s = %s' % (key, value)))
 
-                output.push([
+                output.push(
                     '        ]',
                     '    },'
-                ])
+                )
 
             output.push(')')
 
@@ -206,7 +203,7 @@ class Debianizer(object):
                 django_project = package_config['django']['project']
 
                 with ConfigWriter('postinst', executable=True, package=package_config, count=self.config.packages_count) as output:
-                    output.push([
+                    output.push(
                         '#!/bin/bash',
                         'set -e',
                         '',
@@ -220,9 +217,9 @@ class Debianizer(object):
                         '            chown -R $USER:$GROUP $DIR',
                         '        done',
                         '',
-                    ])
+                    )
                     output.push('        chmod 777 %s' % d for d in self._get_dirs(package_config, only_777=True))
-                    output.push([
+                    output.push(
                         '',
                         '        rm /etc/nginx/sites-enabled/90-%s' % django_project,
                         '        ln -s /etc/nginx/sites-available/90-%s /etc/nginx/sites-enabled/90-%s' % (
@@ -241,7 +238,7 @@ class Debianizer(object):
                         'esac',
                         '#DEBHELPER#',
                         'exit 0',
-                    ])
+                    )
 
     def make_nginx(self):
         for package_config in self.config.packages:
@@ -249,7 +246,7 @@ class Debianizer(object):
                 with ConfigWriter('nginx', executable=True, package=package_config, count=self.config.packages_count) as output:
 
                     # Main config
-                    output.push([
+                    output.push(
                         'server {',
                         '    listen 80;',
                         '    server_name %s;' % package_config['django']['project'],
@@ -277,25 +274,25 @@ class Debianizer(object):
                         '    }',
                         '}',
                         '',
-                    ])
+                    )
 
                     # Redirect from www.
-                    output.push([
+                    output.push(
                         'server {',
                         '    listen 80;',
                         '    server_name www.%s;' % package_config['django']['project'],
                         '    rewrite ^(.*)$ http://%s/$1 permanent;' % package_config['django']['project'],
                         '}',
-                    ])
+                    )
 
                     # Custom redirects
                     for redirect_from, redirect_to in package_config['redirect']:
-                        output.push([
+                        output.push(
                             '',
                             'server {',
                             '    listen 80;',
                             '    server_name %s;' % redirect_from,
-                        ])
+                        )
 
                         if redirect_to.endswith('/'):
                             output.push('    rewrite ^(.*)$ http://%s permanent;' % redirect_to)
@@ -309,7 +306,7 @@ class Debianizer(object):
             if package_config['django']:
                 var_run_dir = '/var/run/nirvana/%s/' % package_config['django']['project']
                 with ConfigWriter('%s.conf' % package_config['django']['project']) as output:
-                    output.push([
+                    output.push(
                         'description    "%s"' % package_config['django']['project'],
                         '',
                         'start on filesystem or runlevel [2345]',
@@ -342,7 +339,7 @@ class Debianizer(object):
                             'maxspare': package_config['django']['maxspare'],
                             'maxchildren': package_config['django']['maxchildren'],
                         },
-                    ])
+                    )
 
     def execute(self, version, changelog_filename=None):
         self.prepare()
