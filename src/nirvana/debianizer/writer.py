@@ -201,45 +201,47 @@ class Debianizer(object):
 
     def make_postinst(self):
         for package_config in self.config.packages:
+            if package_config['django']:
 
-            django_project = package_config['django']['project']
+                django_project = package_config['django']['project']
 
-            with ConfigWriter('postinst', executable=True, package=package_config, count=self.config.packages_count) as output:
-                output.push([
-                    '#!/bin/bash',
-                    'set -e',
-                    '',
-                    'USER="www-data"',
-                    'GROUP="www-data"',
-                    'DIRS=( %s )' % ' '.join('"%s"' % d for d in self._get_dirs(package_config)),
-                    '',
-                    'case $1 in',
-                    '   configure)',
-                    '        for DIR in ${DIRS[@]}; do',
-                    '            chown -R $USER:$GROUP $DIR',
-                    '        done',
-                    '',
-                ])
-                output.push('        chmod 777 %s' % d for d in self._get_dirs(package_config, only_777=True))
-                output.push([
-                    '',
-                    '        ln -s /etc/nginx/sites-available/90-%s /etc/nginx/sites-enabled/90-%s' % (
-                        django_project, django_project
-                    ),
-                    '        /etc/init.d/nginx reload',
-                    '',
-                    '        ;;',
-                    '',
-                    '    abort-upgrade|abort-remove|abort-deconfigure)',
-                    '        ;;',
-                    '',
-                    '    *)',
-                    '        echo "postinst called with unknown argument \`$1\'" >&2',
-                    '        ;;',
-                    'esac',
-                    '#DEBHELPER#',
-                    'exit 0',
-                ])
+                with ConfigWriter('postinst', executable=True, package=package_config, count=self.config.packages_count) as output:
+                    output.push([
+                        '#!/bin/bash',
+                        'set -e',
+                        '',
+                        'USER="www-data"',
+                        'GROUP="www-data"',
+                        'DIRS=( %s )' % ' '.join('"%s"' % d for d in self._get_dirs(package_config)),
+                        '',
+                        'case $1 in',
+                        '   configure)',
+                        '        for DIR in ${DIRS[@]}; do',
+                        '            chown -R $USER:$GROUP $DIR',
+                        '        done',
+                        '',
+                    ])
+                    output.push('        chmod 777 %s' % d for d in self._get_dirs(package_config, only_777=True))
+                    output.push([
+                        '',
+                        '        rm /etc/nginx/sites-enabled/90-%s' % django_project,
+                        '        ln -s /etc/nginx/sites-available/90-%s /etc/nginx/sites-enabled/90-%s' % (
+                            django_project, django_project
+                        ),
+                        '        /etc/init.d/nginx reload',
+                        '',
+                        '        ;;',
+                        '',
+                        '    abort-upgrade|abort-remove|abort-deconfigure)',
+                        '        ;;',
+                        '',
+                        '    *)',
+                        '        echo "postinst called with unknown argument \`$1\'" >&2',
+                        '        ;;',
+                        'esac',
+                        '#DEBHELPER#',
+                        'exit 0',
+                    ])
 
     def make_nginx(self):
         for package_config in self.config.packages:
@@ -255,7 +257,7 @@ class Debianizer(object):
                         '    set $root /usr/lib/%s;' % package_config['django']['dir'],
                         '',
                         '    location / {',
-                        '        fastcgi_pass unix:/var/run/%s-fcgi.sock;' % package_config['django']['dir'],
+                        '        fastcgi_pass unix:/var/run/nirvana/%s/fcgi.sock;' % package_config['django']['project'],
                         '        include /etc/nginx/fastcgi_params;',
                         '        fastcgi_param PATH_INFO $fastcgi_script_name;',
                         '        fastcgi_param SCRIPT_NAME \'\';',
@@ -301,6 +303,46 @@ class Debianizer(object):
                             output.push('    rewrite ^(.*)$ http://%s/$1 permanent;' % redirect_to)
 
                         output.push('}')
+
+    def make_django(self):
+        for package_config in self.config.packages:
+            if package_config['django']:
+                var_run_dir = '/var/run/nirvana/%s/' % package_config['django']['project']
+                with ConfigWriter('%s.conf' % package_config['django']['project']) as output:
+                    output.push([
+                        'description    "%s"' % package_config['django']['project'],
+                        '',
+                        'start on filesystem or runlevel [2345]',
+                        'stop on runlevel [!2345]',
+                        '',
+                        'console none',
+                        '',
+                        'pre-start script',
+                        '    mkdir -p %s' % var_run_dir,
+                        '    chown -R www-data:www-data %s' % var_run_dir,
+                        'end script',
+                        '',
+                        'pre-stop script',
+                        '    kill -SIGINT `cat %sfcgi.pid`' % var_run_dir,
+                        '    sleep 5',
+                        'end script',
+                        '',
+                        (
+                            'exec sudo -u www-data /usr/lib/%(dir)s/manage.py runfcgi ' +
+                            'pidfile=%(var_run)sfcgi.pid ' +
+                            'socket=%(var_run)sfcgi.sock ' +
+                            'method=prefork ' +
+                            'minspare=%(minspare)s ' +
+                            'maxspare=%(maxspare)s ' +
+                            'maxchildren=%(maxchildren)s'
+                        ) % {
+                            'dir': package_config['django']['dir'],
+                            'var_run': var_run_dir,
+                            'minspare': package_config['django']['minspare'],
+                            'maxspare': package_config['django']['maxspare'],
+                            'maxchildren': package_config['django']['maxchildren'],
+                        },
+                    ])
 
     def execute(self, version, changelog_filename=None):
         self.prepare()
