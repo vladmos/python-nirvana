@@ -19,7 +19,7 @@ PACKAGE_CONFIG_STRUCTURE = {
     'package': {
         'required': True,
         'fields': ['name', 'description'],
-        'optional': ['debian-requirements'],
+        'optional': ['debian-requirements', 'logs'],
         'load_file': ['debian-requirements'],
     },
     'django': {

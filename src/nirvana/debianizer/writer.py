@@ -188,9 +188,25 @@ class Debianizer(object):
             with ConfigWriter('dirs', package=package_config, count=self.config.packages_count) as output:
                 output.push(*self._get_dirs(package_config))
 
+    def make_logrotate(self):
+        if self.config.header['package']['logs']:
+            with ConfigWriter('logrotate/%s' % self.config.header['package']['name']) as output:
+                output.push(
+                    '/var/log/%s/*.log {' % self.config.header['package']['name'],
+                    '    daily',
+                    '    rotate 14',
+                    '    missingok',
+                    '    notifempty',
+                    '    copytruncate',
+                    '}'
+                )
+
     def make_install(self):
         for package_config in self.config.packages:
             with ConfigWriter('install', package=package_config, count=self.config.packages_count) as output:
+
+                if self.config.header['package']['logs']:
+                    output.push('debian/logrotate/*\t\t\t/etc/logrotate.d')
 
                 if package_config['django']:
                     django_dir = package_config['django']['dir']
