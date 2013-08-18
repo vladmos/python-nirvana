@@ -2,7 +2,7 @@ import os
 from collections import defaultdict
 import shutil
 
-from utils import remove_debianization, get_current_datetime
+from utils import remove_debianization, get_current_datetime, create_file_path
 
 
 class ConfigWriter(object):
@@ -20,7 +20,11 @@ class ConfigWriter(object):
         if not self._lines:
             return
 
-        self._file = open(self._filename, 'w')
+        try:
+            self._file = open(self._filename, 'w')
+        except IOError:
+            create_file_path(self._filename)
+            self._file = open(self._filename, 'w')
 
         for line in self._lines:
             self._file.write(line + '\n')
@@ -182,7 +186,7 @@ class Debianizer(object):
     def make_dirs(self):
         for package_config in self.config.packages:
             with ConfigWriter('dirs', package=package_config, count=self.config.packages_count) as output:
-                output.push(self._get_dirs(package_config))
+                output.push(*self._get_dirs(package_config))
 
     def make_install(self):
         for package_config in self.config.packages:
@@ -191,10 +195,10 @@ class Debianizer(object):
                 if package_config['django']:
                     django_dir = package_config['django']['dir']
                     output.push('%s/*\t\t\t/usr/lib/%s' % (django_dir, django_dir))
-                    output.push('debian/%s.conf\t\t\t/etc/init/' % package_config['django']['project'])
+                    output.push('debian/upstart/*\t\t\t/etc/init/')
 
                     if package_config['django']['server'] == 'nginx':
-                        output.push('debian/90-%s\t\t\t/etc/nginx/sites-available/' % package_config['django']['project'])
+                        output.push('debian/nginx/*\t\t\t/etc/nginx/sites-available/')
 
     def make_postinst(self):
         for package_config in self.config.packages:
@@ -218,11 +222,13 @@ class Debianizer(object):
                         '        done',
                         '',
                     )
-                    output.push('        chmod 777 %s' % d for d in self._get_dirs(package_config, only_777=True))
+
+                    for d in self._get_dirs(package_config, only_777=True):
+                        output.push('        chmod 777 %s' % d)
+
                     output.push(
                         '',
-                        '        rm /etc/nginx/sites-enabled/90-%s' % django_project,
-                        '        ln -s /etc/nginx/sites-available/90-%s /etc/nginx/sites-enabled/90-%s' % (
+                        '        ln -fs /etc/nginx/sites-available/90-%s /etc/nginx/sites-enabled/90-%s' % (
                             django_project, django_project
                         ),
                         '        /etc/init.d/nginx reload',
@@ -243,7 +249,8 @@ class Debianizer(object):
     def make_nginx(self):
         for package_config in self.config.packages:
             if package_config['django']['server'] == 'nginx':
-                with ConfigWriter('nginx', executable=True, package=package_config, count=self.config.packages_count) as output:
+                with ConfigWriter('nginx/90-%s' % package_config['django']['project'], executable=True,
+                                  package=package_config, count=self.config.packages_count) as output:
 
                     # Main config
                     output.push(
@@ -305,7 +312,7 @@ class Debianizer(object):
         for package_config in self.config.packages:
             if package_config['django']:
                 var_run_dir = '/var/run/nirvana/%s/' % package_config['django']['project']
-                with ConfigWriter('%s.conf' % package_config['django']['project']) as output:
+                with ConfigWriter('upstart/%s.conf' % package_config['django']['project']) as output:
                     output.push(
                         'description    "%s"' % package_config['django']['project'],
                         '',

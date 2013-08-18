@@ -2,7 +2,7 @@ import os
 import shutil
 import datetime
 import time
-
+import subprocess
 
 def remove_path(path):
     if os.path.exists(path):
@@ -10,6 +10,11 @@ def remove_path(path):
             shutil.rmtree(path)
         else:
             os.remove(path)
+
+
+def create_file_path(filename):
+    path = os.path.split(filename)[0]
+    subprocess.call(['mkdir', '-p', path])
 
 
 def remove_debianization():
