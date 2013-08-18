@@ -57,9 +57,9 @@ class Commands(object):
         Remove debian/, setup.py, build-related files
         """
         remove_debianization()
-        for package_config in self.config.packages():
+        for package_config in self.config.packages:
             package_name = package_config['package']['name']
-            remove_eggs(package_name, self.config.header()['python']['source_dir'])
+            remove_eggs(package_name, self.config.header['python']['source_dir'])
             if remove_deb:
                 remove_deb_package(package_name, self.version)
 
