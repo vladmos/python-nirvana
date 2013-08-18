@@ -357,19 +357,15 @@ class Debianizer(object):
                         '',
                         'console none',
                         '',
+                        'respawn',
+                        '',
                         'pre-start script',
                         '    mkdir -p %s' % var_run_dir,
                         '    chown -R www-data:www-data %s' % var_run_dir,
                         'end script',
                         '',
-                        'pre-stop script',
-                        '    kill -SIGINT `cat %sfcgi.pid`' % var_run_dir,
-                        '    sleep 5',
-                        'end script',
-                        '',
                         (
                             'exec sudo -u www-data /usr/lib/%(dir)s/manage.py runfcgi ' +
-                            'pidfile=%(var_run)sfcgi.pid ' +
                             'socket=%(var_run)sfcgi.sock ' +
                             'method=prefork ' +
                             'minspare=%(minspare)s ' +
