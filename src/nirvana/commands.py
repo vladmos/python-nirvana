@@ -11,11 +11,12 @@ import settings
 from utils import call_command
 
 
-def pretty_print(message):
+def pretty_print(message, error=False):
     """
     Prints the message in bold cyan font to distinguish messages from Nirvana
     """
-    print('\033[1;36m%s\033[1;m' % message)
+    code = '31' if error else '36'
+    print('\033[1;%sm%s\033[1;m' % (code, message))
 
 
 class Commands(object):
@@ -27,12 +28,12 @@ class Commands(object):
                 try:
                     config = load_config()
                 except ConfigError, e:
-                    pretty_print('Nirvana configuration error: %s' % e)
+                    pretty_print('Nirvana configuration error: %s' % e, error=True)
                     sys.exit(1)
 
                 for warning in warnings_list:
                     if issubclass(warning.category, ConfigWarning):
-                        pretty_print('Nirvana configuration warning: %s' % warning.message)
+                        pretty_print('Nirvana configuration warning: %s' % warning.message, error=True)
 
                 self._config = config
 
@@ -46,7 +47,7 @@ class Commands(object):
                     line = changelog_file.readline()
                     self._version = re.search(r'\((.*?)\)', line).group(1)
             except AttributeError:
-                print ('Error: invalid changelog file')
+                pretty_print('Error: invalid changelog file', error=True)
                 sys.exit(1)
             except IOError:
                 self._version = '0.1.0'
