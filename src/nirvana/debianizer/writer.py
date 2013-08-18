@@ -167,16 +167,16 @@ class Debianizer(object):
             output.push(')')
 
     def _get_dirs(self, package_config, only_777=False):
-        dirs = []
+        dirs = ['/var/log/%s' % package_config['package']['name']]
 
         dirs.extend('/var/spool/%s/%s' % (
             package_config['package']['name'], s
-        ) for s in (package_config['dirs']['spool_777'] or '').split(','))
+        ) for s in (package_config['dirs']['spool_777'] or '').split(',') if s)
 
         if not only_777:
             dirs.extend('/var/spool/%s/%s' % (
                 package_config['package']['name'], s
-            ) for s in (package_config['dirs']['spool'] or '').split(','))
+            ) for s in (package_config['dirs']['spool'] or '').split(',') if s)
 
             if package_config['django']['server'] == 'nginx':
                 dirs.append('/var/log/nginx/%s' % package_config['django']['project'])
@@ -296,7 +296,7 @@ class Debianizer(object):
                             '',
                             '    location /%s {' % relative_url,
                             '        internal;',
-                            '        alias /var/spool/%s/%s/;' % (package_config['django']['project'], directory),
+                            '        alias /var/spool/%s/%s/;' % (package_config['package']['name'], directory),
                             '    }',
                         )
 
