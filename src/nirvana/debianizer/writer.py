@@ -287,11 +287,24 @@ class Debianizer(object):
                         '    location = /favicon.ico {',
                         '        root $root/media/;',
                         '    }',
-                        '}',
                     )
+
+                    if package_config['django']['internal_redirect']:
+                        relative_url, directory = package_config['django']['internal_redirect'].split(':')
+
+                        output.push(
+                            '',
+                            '    location /%s {' % relative_url,
+                            '        internal;',
+                            '        alias /var/spool/%s/%s/;' % (package_config['django']['project'], directory),
+                            '    }',
+                        )
+
+                    output.push('}')
 
                     # Redirect from www.
                     output.push(
+                        '',
                         'server {',
                         '    listen 80;',
                         '    server_name www.%s;' % package_config['django']['project'],
