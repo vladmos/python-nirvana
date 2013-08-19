@@ -102,7 +102,6 @@ class Commands(object):
         """
         Install the package in the system
         """
-        self.command_debianize(args)
         self.command_build(args, clean=False)
 
         pretty_print('Installing the package...')
