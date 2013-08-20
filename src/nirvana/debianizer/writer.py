@@ -297,11 +297,11 @@ class Debianizer(object):
                         '    }',
                         '',
                         '    location ~* ^/(robots\.txt|humans\.txt)$ {',
-                        '        root $root;',
+                        '        root $root/media/txt;',
                         '    }',
                         '',
                         '    location = /favicon.ico {',
-                        '        root $root/media/;',
+                        '        root $root/media/img;',
                         '    }',
                     )
 
