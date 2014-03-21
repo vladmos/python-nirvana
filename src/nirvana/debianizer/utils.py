@@ -47,7 +47,7 @@ def get_current_datetime():
     tz_offset = -time.timezone // 60  # In minutes
     tz_offset_hours = tz_offset // 60
     tz_offset_minutes = tz_offset % 60
-    tz_offset_string = '%s%02d%02d' % ('-' if tz_offset < 0 else '+', tz_offset_hours, tz_offset_minutes)
+    tz_offset_string = '%s%02d%02d' % ('-' if tz_offset < 0 else '+', abs(tz_offset_hours), tz_offset_minutes)
 
     now = datetime.datetime.now()
     return '%(day_of_week)s, %(day)s %(month)s %(year)s %(time)s %(timeshift)s' % {

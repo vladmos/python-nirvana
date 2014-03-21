@@ -74,7 +74,7 @@ class Debianizer(object):
             python_version = header_config['python']['version']
             output.push(
                 'Source: %s' % header_config['project']['name'],
-                'Build-Depends: debhelper (>= 4), python (>=2.5), python-support, cdbs',
+                'Build-Depends: debhelper (>= 4), python (>=2.5), python-support, cdbs, python-setuptools, python-central',
                 'XS-Python-Version: >= 2.5',
                 'Maintainer: %s <%s>' % (
                     header_config['project']['maintainer'],

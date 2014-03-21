@@ -93,7 +93,7 @@ class Commands(object):
         self.command_debianize(args)
 
         pretty_print('Building a debian package...')
-        call_command('debuild')
+        call_command('debuild -uc -us')
 
         if clean:
             self.command_clean(args, remove_deb=False)
