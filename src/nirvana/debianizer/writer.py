@@ -266,7 +266,7 @@ class Debianizer(object):
     def make_nginx(self):
         for package_config in self.config.packages:
             if package_config['django']['server'] == 'nginx':
-                with ConfigWriter('nginx/90-%s' % package_config['django']['project'], executable=True,
+                with ConfigWriter('nginx/90-%s' % package_config['django']['project'],
                                   package=package_config, count=self.config.packages_count) as output:
 
                     # Main config
