@@ -45,11 +45,16 @@ Usage
 
 You need to generate a gpg key in order to sign deb packages: `gpg --gen-key`.
 
-  * Initial installation of nirvana: `python src/nirvana/__init__.py` (here and later it's assumed the current dir is the project's root).
+  * Initial installation of nirvana: `python src/nirvana/__init__.py install` (here and later it's assumed the current dir is the project's root).
   * Install a nirvana-driven package: `nirvana install`
   * Just debianize: `nirvana debianize`
   * Just build deb-package(s): `nirvana build`
   * Update changelog: `nirvana changelog`
+
+Dependences
+-----------
+
+For initial installation using `python src/nirvana/__init__.py install` run the following: `sudo apt-get install devscripts debhelper python-support cdbs python-setuptools python-central`
 
 License
 -------
