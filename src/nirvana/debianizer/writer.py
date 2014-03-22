@@ -381,6 +381,12 @@ class Debianizer(object):
                         },
                     )
 
+    def make_links(self):
+        for package_config in self.config.packages:
+            if package_config['django']:
+                with ConfigWriter('links', package=package_config, count=self.config.packages_count) as output:
+                    output.push('/lib/init/upstart-job    /etc/init.d/%s' % package_config['django']['project'])
+
     def execute(self, version, changelog_filename=None):
         self.prepare()
         self._version = version
