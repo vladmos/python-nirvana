@@ -29,8 +29,11 @@ class IniConfigSection(object):
             pass
 
     def __iter__(self):
-        for option in self._ini_config._config.options(self._section):
-            yield option, self[option]
+        try:
+            for option in self._ini_config._config.options(self._section):
+                yield option, self[option]
+        except NoSectionError:
+            return
 
     def __nonzero__(self):
         try:

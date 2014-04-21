@@ -74,7 +74,7 @@ class Debianizer(object):
             python_version = header_config['python']['version']
             output.push(
                 'Source: %s' % header_config['project']['name'],
-                'Build-Depends: debhelper (>= 4), python (>=2.5), python-support, cdbs, python-setuptools, python-central',
+                'Build-Depends: debhelper (>= 4), python (>=2.5), python-support, cdbs, python-setuptools',
                 'XS-Python-Version: >= 2.5',
                 'Maintainer: %s <%s>' % (
                     header_config['project']['maintainer'],
@@ -113,13 +113,14 @@ class Debianizer(object):
             output.push(
                 '#!/usr/bin/make -f',
                 '',
-                'DEB_PYTHON_SYSTEM = pycentral',
-                'DEB_COMPRESS_EXCLUDE = .py',
-                '',
-                'include /usr/share/cdbs/1/rules/debhelper.mk',
+                '%:',
+                '\tdh $@ --with python2 --buildsystem=python_distutils',
+                'override_dh_auto_install:',
+                '\tpython setup.py install --root=debian/tmp --install-layout=deb' +
+                    ' --install-lib=/usr/lib/python2.7/dist-packages/' +
+                    ' --install-scripts=/usr/lib/python2.7/dist-packages/',
+                'override_dh_auto_build:',
             )
-            if header_config['python']:
-                output.push('include /usr/share/cdbs/1/class/python-distutils.mk')
 
             sections = defaultdict(lambda: defaultdict(list))
             #for package in self.config.packages:
@@ -157,7 +158,7 @@ class Debianizer(object):
                 )
 
                 for key, value in header_config['entry_points']:
-                    output.push('            %s,' % repr('%s = %s' % (key, value)))
+                    output.push('            %s,' % repr('%s_bin = %s' % (key, value)))
 
                 output.push(
                     '        ]',
@@ -383,9 +384,11 @@ class Debianizer(object):
 
     def make_links(self):
         for package_config in self.config.packages:
-            if package_config['django']:
-                with ConfigWriter('links', package=package_config, count=self.config.packages_count) as output:
+            with ConfigWriter('links', package=package_config, count=self.config.packages_count) as output:
+                if package_config['django']:
                     output.push('/lib/init/upstart-job    /etc/init.d/%s' % package_config['django']['project'])
+                for key, value in self.config.header['entry_points']:
+                    output.push('/usr/lib/python2.7/dist-packages/%s_bin    /usr/bin/%s' % (key, key))
 
     def execute(self, version, changelog_filename=None):
         self.prepare()
