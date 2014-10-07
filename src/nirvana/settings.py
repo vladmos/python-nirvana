@@ -24,7 +24,7 @@ PACKAGE_CONFIG_STRUCTURE = {
     },
     'django': {
         'fields': ['server', 'project', 'minspare', 'maxspare', 'maxchildren', 'dir'],
-        'optional': ['ycssjs', 'internal_redirect'],
+        'optional': ['ycssjs', 'internal_redirect', 'alias', 'ssl'],
     },
     'redirect': {
         'requires': ['django'],

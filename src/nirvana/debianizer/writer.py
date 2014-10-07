@@ -270,12 +270,39 @@ class Debianizer(object):
                 with ConfigWriter('nginx/90-%s' % package_config['django']['project'],
                                   package=package_config, count=self.config.packages_count) as output:
 
+                    ssl = package_config['django']['ssl']
+
                     # Main config
                     output.push(
                         'server {',
                         '    listen 80;',
+                    )
+
+                    if ssl:
+                        output.push(
+                            '    listen 443 ssl;'
+                        )
+
+                    output.push(
                         '    server_name %s;' % package_config['django']['project'],
                         '',
+                    )
+
+                    if ssl:
+                        certificate, key = ssl.split(':', 1)
+
+                        output.push(
+                            '    ssl_certificate %s;' % certificate,
+                            '    ssl_certificate_key %s;' % key,
+                            '',
+                            '    if ( $scheme = http ) {',
+                            '        rewrite ^(.*)$ https://$host$1;',
+                            '    }',
+                            '',
+                        )
+
+
+                    output.push(
                         '    access_log /var/log/nginx/%s/access.log;' % package_config['django']['project'],
                         '    error_log /var/log/nginx/%s/error.log;' % package_config['django']['project'],
                         '',
@@ -289,11 +316,11 @@ class Debianizer(object):
                         '        client_max_body_size 30m;',
                         '    }',
                         '',
-                        '    location ^~ /media/ {',
+                        '    location /media/ {',
                         '        root $root;',
                         '    }',
                         '',
-                        '    location ^~ /static/admin/ {',
+                        '    location /static/admin/ {',
                         '        root /usr/lib/python2.7/dist-packages/django/contrib/admin;',
                         '    }',
                         '',
@@ -306,8 +333,17 @@ class Debianizer(object):
                         '    }',
                     )
 
+                    if package_config['django']['alias']:
+                        path, directory = package_config['django']['alias'].split(':', 1)
+                        output.push(
+                            '',
+                            '    location /%s {' % path,
+                            '        alias %s;' % directory,
+                            '    }',
+                        )
+
                     if package_config['django']['internal_redirect']:
-                        relative_url, directory = package_config['django']['internal_redirect'].split(':')
+                        relative_url, directory = package_config['django']['internal_redirect'].split(':', 1)
 
                         output.push(
                             '',
