@@ -275,25 +275,26 @@ class Debianizer(object):
                     # Main config
                     output.push(
                         'server {',
+                        '    server_name %(name)s www.%(name)s;' % {'name': package_config['django']['project']},
+                        '',
                         '    listen 80;',
                     )
+
+                    certificate, key = ssl.split(':', 1)
 
                     if ssl:
                         output.push(
                             '    listen 443 ssl;'
-                        )
-
-                    output.push(
-                        '    server_name %(name)s www.%(name)s;' % {'name': package_config['django']['project']},
-                        '',
-                    )
-
-                    if ssl:
-                        certificate, key = ssl.split(':', 1)
-
-                        output.push(
+                            '',
                             '    ssl_certificate %s;' % certificate,
                             '    ssl_certificate_key %s;' % key,
+                            '',
+                            '    ssl_protocols TLSv1 TLSv1.1 TLSv1.2;',
+                            '    ssl_prefer_server_ciphers on;',
+                            '    ssl_session_cache builtin:1000 shared:SSL:10m;',
+                            '    ssl_dhparam /etc/ssl/certs/dhparam.pem;',
+                            '    ssl_stapling on;',
+                            '    ssl_stapling_verify on;',
                             '',
                             '    add_header Strict-Transport-Security max-age=31536000;',
                             '',
