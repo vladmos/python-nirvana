@@ -284,7 +284,7 @@ class Debianizer(object):
                         )
 
                     output.push(
-                        '    server_name %s;' % package_config['django']['project'],
+                        '    server_name %(name)s www.%(name)s;' % {'name': package_config['django']['project']},
                         '',
                     )
 
@@ -295,14 +295,19 @@ class Debianizer(object):
                             '    ssl_certificate %s;' % certificate,
                             '    ssl_certificate_key %s;' % key,
                             '',
+                            '    add_header Strict-Transport-Security max-age=31536000;',
+                            '',
                             '    if ( $scheme = http ) {',
-                            '        rewrite ^(.*)$ https://$host$1;',
+                            '        rewrite ^(.*)$ https://%s$1;' % package_config['django']['project'],
                             '    }',
                             '',
                         )
 
-
                     output.push(
+                        '    if ( $host = www.%s ) {' % package_config['django']['project'],
+                        '        rewrite ^(.*)$ http%s://%s$1;' % ('s' if ssl else '', package_config['django']['project']),
+                        '    }',
+                        '',
                         '    access_log /var/log/nginx/%s/access.log;' % package_config['django']['project'],
                         '    error_log /var/log/nginx/%s/error.log;' % package_config['django']['project'],
                         '',
@@ -354,16 +359,6 @@ class Debianizer(object):
                         )
 
                     output.push('}')
-
-                    # Redirect from www.
-                    output.push(
-                        '',
-                        'server {',
-                        '    listen 80;',
-                        '    server_name www.%s;' % package_config['django']['project'],
-                        '    rewrite ^(.*)$ http://%s/$1 permanent;' % package_config['django']['project'],
-                        '}',
-                    )
 
                     # Custom redirects
                     for redirect_from, redirect_to in package_config['redirect']:
