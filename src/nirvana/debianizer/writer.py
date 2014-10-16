@@ -330,7 +330,7 @@ class Debianizer(object):
                         '        root /usr/lib/python2.7/dist-packages/django/contrib/admin;',
                         '    }',
                         '',
-                        '    location ~* ^/(robots\.txt|humans\.txt)$ {',
+                        '    location ~* ^/[\w\-]+\.txt$ {',
                         '        root $root/media/txt;',
                         '    }',
                         '',
