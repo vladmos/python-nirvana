@@ -322,15 +322,7 @@ class Debianizer(object):
                         '        client_max_body_size 30m;',
                         '    }',
                         '',
-                        '    location /static/js/ {',
-                        '        root $root;',
-                        '    }',
-                        '',
-                        '    location /static/css/ {',
-                        '        root $root;',
-                        '    }',
-                        '',
-                        '    location /static/img/ {',
+                        '    location /static/ {',
                         '        root $root;',
                         '    }',
                         '',
@@ -348,13 +340,14 @@ class Debianizer(object):
                     )
 
                     if package_config['django']['alias']:
-                        path, directory = package_config['django']['alias'].split(':', 1)
-                        output.push(
-                            '',
-                            '    location /%s {' % path,
-                            '        alias %s;' % directory,
-                            '    }',
-                        )
+                        for line in package_config['django']['alias'].split(';'):
+                            path, directory = line.split(':', 1)
+                            output.push(
+                                '',
+                                '    location /%s {' % path,
+                                '        alias %s;' % directory,
+                                '    }',
+                            )
 
                     if package_config['django']['internal_redirect']:
                         relative_url, directory = package_config['django']['internal_redirect'].split(':', 1)
