@@ -335,11 +335,11 @@ class Debianizer(object):
                         '    }',
                         '',
                         '    location ~* ^/[\w\-]+\.txt$ {',
-                        '        root $root/media/txt;',
+                        '        root $root/static/txt;',
                         '    }',
                         '',
                         '    location = /favicon.ico {',
-                        '        root $root/media/img;',
+                        '        root $root/static/img;',
                         '    }',
                     )
 
