@@ -386,37 +386,28 @@ class Debianizer(object):
         for package_config in self.config.packages:
             if package_config['django']:
                 var_run_dir = '/var/run/nirvana/%s/' % package_config['django']['project']
-                with ConfigWriter('upstart/%s.conf' % package_config['django']['project']) as output:
+                with ConfigWriter('systemd/%s.service' % package_config['django']['project']) as output:
                     output.push(
-                        'description    "%s"' % package_config['django']['project'],
+                        '[Unit]'
+                        'Description=%s' % package_config['django']['project'],
                         '',
-                        'start on filesystem or runlevel [2345]',
-                        'stop on runlevel [!2345]',
-                        '',
-                        'console none',
-                        '',
-                        'respawn',
-                        '',
-                        'pre-start script',
-                        '    mkdir -p %s' % var_run_dir,
-                        '    chown -R www-data:www-data %s' % var_run_dir,
-                        'end script',
-                        '',
-                        (
-                            'exec sudo -u www-data /usr/lib/%(dir)s/manage.py runfcgi ' +
+                        '[Service]',
+                        'TimeoutStartSec=0',
+                        'ExecStartPre=mkdir -p %s' % var_run_dir,
+                        'ExecStartPre=chown -R www-data:www-data %s' % var_run_dir,
+                        'ExecStart=exec sudo -u www-data /usr/lib/%(dir)s/manage.py runfcgi ' +
                             'socket=%(var_run)sfcgi.sock ' +
                             'method=prefork ' +
                             'minspare=%(minspare)s ' +
                             'maxspare=%(maxspare)s ' +
                             'maxchildren=%(maxchildren)s ' +
-                            'daemonize=false'
-                        ) % {
-                            'dir': package_config['django']['dir'],
-                            'var_run': var_run_dir,
-                            'minspare': package_config['django']['minspare'],
-                            'maxspare': package_config['django']['maxspare'],
-                            'maxchildren': package_config['django']['maxchildren'],
-                        },
+                            'daemonize=false' % {
+                                'dir': package_config['django']['dir'],
+                                'var_run': var_run_dir,
+                                'minspare': package_config['django']['minspare'],
+                                'maxspare': package_config['django']['maxspare'],
+                                'maxchildren': package_config['django']['maxchildren'],
+                            },
                     )
 
     def make_links(self):
