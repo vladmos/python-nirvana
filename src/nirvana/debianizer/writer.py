@@ -212,7 +212,7 @@ class Debianizer(object):
                 if package_config['django']:
                     django_dir = package_config['django']['dir']
                     output.push('%s/*\t\t\t/usr/lib/%s' % (django_dir, django_dir))
-                    output.push('debian/upstart/*\t\t\t/etc/init/')
+                    output.push('debian/systemd/*\t\t\t/lib/systemd/system/')
 
                     if package_config['django']['server'] == 'nginx':
                         output.push('debian/nginx/*\t\t\t/etc/nginx/sites-available/')
@@ -413,8 +413,8 @@ class Debianizer(object):
     def make_links(self):
         for package_config in self.config.packages:
             with ConfigWriter('links', package=package_config, count=self.config.packages_count) as output:
-                if package_config['django']:
-                    output.push('/lib/init/upstart-job    /etc/init.d/%s' % package_config['django']['project'])
+                # if package_config['django']:
+                #     output.push('/lib/init/upstart-job    /etc/init.d/%s' % package_config['django']['project'])
                 for key, value in self.config.header['entry_points']:
                     output.push('/usr/lib/python2.7/dist-packages/%s_bin    /usr/bin/%s' % (key, key))
 
